@@ -1,5 +1,21 @@
 {
-  "extends": "../../.jshintrc-base",
+  "bitwise": true,
+  "immed": true,
+  "newcap": true,
+  "noarg": true,
+  "noempty": true,
+  "nonew": true,
+  "trailing": true,
+  "maxlen": 200,
+  "boss": true,
+  "eqnull": true,
+  "expr": true,
+  "globalstrict": true,
+  "laxbreak": true,
+  "loopfunc": true,
+  "sub": true,
+  "undef": true,
+  "indent": 2,
   "bitwise": false, /* locale files use bitwise operators */
   "maxlen": false, /* locale files are generated from a 3rd party library that has long lines */
   "browser": true,

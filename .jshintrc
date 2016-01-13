@@ -17,5 +17,6 @@
   "undef": true,
   "indent": 2,
   "node": true,
+  "jasmine": true,
   "globals": {}
 }

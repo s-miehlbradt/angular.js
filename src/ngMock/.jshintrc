@@ -17,6 +17,7 @@
   "undef": true,
   "indent": 2,
   "browser": true,
+  "jasmine": true,
   "globals": {
     "angular": false,
     "expect": false,

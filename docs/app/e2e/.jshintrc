@@ -16,6 +16,7 @@
   "sub": true,
   "undef": true,
   "indent": 2,
+  "jasmine": true,
 
   "globals": {
 

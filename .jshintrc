@@ -17,6 +17,20 @@
   "undef": true,
   "indent": 2,
   "node": true,
-  "jasmine": true,
-  "globals": {}
+  "globals": {
+    /* jasmine / karma */
+    "it": false,
+    "iit": false,
+    "describe": false,
+    "ddescribe": false,
+    "beforeEach": false,
+    "afterEach": false,
+    "expect": false,
+    "jasmine": false,
+    "spyOn": false,
+    "waits": false,
+    "waitsFor": false,
+    "runs": false,
+    "dump": false
+  }
 }

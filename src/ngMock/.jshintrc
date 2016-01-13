@@ -17,10 +17,23 @@
   "undef": true,
   "indent": 2,
   "browser": true,
-  "jasmine": true,
   "globals": {
     "angular": false,
     "expect": false,
-    "jQuery": false
+    "jQuery": false,
+    /* jasmine / karma */
+    "it": false,
+    "iit": false,
+    "describe": false,
+    "ddescribe": false,
+    "beforeEach": false,
+    "afterEach": false,
+    "expect": false,
+    "jasmine": false,
+    "spyOn": false,
+    "waits": false,
+    "waitsFor": false,
+    "runs": false,
+    "dump": false
   }
 }

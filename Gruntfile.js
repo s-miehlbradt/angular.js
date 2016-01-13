@@ -107,6 +107,7 @@ module.exports = function(grunt) {
     jshint: {
       options: {
         jshintrc: true,
+        jasmine: true
       },
       node: {
         files: { src: ['*.js', 'lib/**/*.js'] },

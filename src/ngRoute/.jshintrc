@@ -19,6 +19,20 @@
   "browser": true,
   "globals": {
     "angular": false,
-    "ngRouteModule": false
+    "ngRouteModule": false,
+    /* jasmine / karma */
+    "it": false,
+    "iit": false,
+    "describe": false,
+    "ddescribe": false,
+    "beforeEach": false,
+    "afterEach": false,
+    "expect": false,
+    "jasmine": false,
+    "spyOn": false,
+    "waits": false,
+    "waitsFor": false,
+    "runs": false,
+    "dump": false
   }
 }

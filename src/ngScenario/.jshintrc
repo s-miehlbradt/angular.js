@@ -33,6 +33,20 @@
     "WebKitAnimationEvent": false,
     "WebKitTransitionEvent": false,
     "$runner": false,
-    "callerFile": false
+    "callerFile": false,
+    /* jasmine / karma */
+    "it": false,
+    "iit": false,
+    "describe": false,
+    "ddescribe": false,
+    "beforeEach": false,
+    "afterEach": false,
+    "expect": false,
+    "jasmine": false,
+    "spyOn": false,
+    "waits": false,
+    "waitsFor": false,
+    "runs": false,
+    "dump": false
   }
 }

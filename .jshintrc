@@ -18,6 +18,8 @@
   "indent": 2,
   "node": true,
   "globals": {
+    //a comment
+    /* the other comment*/
     "it": false,
     "iit": false,
     "describe": false,

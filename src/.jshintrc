@@ -189,5 +189,10 @@
     /* ng/directive/form.js */
     "nullFormCtrl": false
 
+    "bootstrap": true
+    "copy": true
+    "merge": true
+    "noop": true
+
   }
 }

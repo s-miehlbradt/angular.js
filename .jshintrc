@@ -18,7 +18,6 @@
   "indent": 2,
   "node": true,
   "globals": {
-    /* jasmine / karma */
     "it": false,
     "iit": false,
     "describe": false,

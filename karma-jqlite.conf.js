@@ -21,7 +21,7 @@ module.exports = function(config) {
       // configure the reporter
       coverageReporter: {
           type : 'clover',
-          dir : '/tmp/coverage/'
+          dir : 'coverage/'
       }
   });
 };

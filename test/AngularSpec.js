@@ -86,6 +86,7 @@ describe('angular', function() {
         expect(copy(src) instanceof Uint8Array).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
       }
     });
 
@@ -97,6 +98,7 @@ describe('angular', function() {
         expect(copy(src) instanceof Uint8ClampedArray).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
       }
     });
 
@@ -108,6 +110,7 @@ describe('angular', function() {
         expect(copy(src) instanceof Uint16Array).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
       }
     });
 
@@ -119,6 +122,7 @@ describe('angular', function() {
         expect(copy(src) instanceof Uint32Array).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
       }
     });
 
@@ -130,6 +134,7 @@ describe('angular', function() {
         expect(copy(src) instanceof Int8Array).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
       }
     });
 
@@ -141,6 +146,7 @@ describe('angular', function() {
         expect(copy(src) instanceof Int16Array).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
       }
     });
 
@@ -152,6 +158,7 @@ describe('angular', function() {
         expect(copy(src) instanceof Int32Array).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
       }
     });
 
@@ -163,6 +170,7 @@ describe('angular', function() {
         expect(copy(src) instanceof Float32Array).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
       }
     });
 
@@ -174,6 +182,61 @@ describe('angular', function() {
         expect(copy(src) instanceof Float64Array).toBeTruthy();
         expect(dst).toEqual(src);
         expect(dst).not.toBe(src);
+        expect(dst.buffer).not.toBe(src.buffer);
+      }
+    });
+
+    it('should copy an ArrayBuffer with no destination', function() {
+      if (typeof ArrayBuffer !== 'undefined') {
+        var src = new ArrayBuffer(8);
+        new Int32Array(src).set([1, 2]);
+
+        var dst = copy(src);
+        expect(dst instanceof ArrayBuffer).toBeTruthy();
+        expect(dst).toEqual(src);
+        expect(dst).not.toBe(src);
+      }
+    });
+
+    it('should handle ArrayBuffer objects with multiple references', function() {
+      if (typeof ArrayBuffer !== 'undefined') {
+        var buffer = new ArrayBuffer(8);
+        var src = [new Int32Array(buffer), new Float32Array(buffer)];
+        src[0].set([1, 2]);
+
+        var dst = copy(src);
+        expect(dst).toEqual(src);
+        expect(dst[0]).not.toBe(src[0]);
+        expect(dst[1]).not.toBe(src[1]);
+        expect(dst[0].buffer).toBe(dst[1].buffer);
+        expect(dst[0].buffer).not.toBe(buffer);
+      }
+    });
+
+    it('should handle Int32Array objects with multiple references', function() {
+      if (typeof Int32Array !== 'undefined') {
+        var arr = new Int32Array(2);
+        var src = [arr, arr];
+        arr.set([1, 2]);
+
+        var dst = copy(src);
+        expect(dst).toEqual(src);
+        expect(dst).not.toBe(src);
+        expect(dst[0]).not.toBe(src[0]);
+        expect(dst[0]).toBe(dst[1]);
+        expect(dst[0].buffer).toBe(dst[1].buffer);
+      }
+    });
+
+    it('should handle Blob objects', function() {
+      if (typeof Blob !== 'undefined') {
+        var src = new Blob(['foo'], {type: 'bar'});
+        var dst = copy(src);
+
+        expect(dst).not.toBe(src);
+        expect(dst.size).toBe(3);
+        expect(dst.type).toBe('bar');
+        expect(isBlob(dst)).toBe(true);
       }
     });
 
@@ -253,6 +316,15 @@ describe('angular', function() {
       if (typeof Float64Array !== 'undefined') {
         var src = new Float64Array();
         var dst = new Float64Array(5);
+        expect(function() { copy(src, dst); })
+          .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
+      }
+    });
+
+    it("should throw an exception if an ArrayBuffer is the destination", function() {
+      if (typeof ArrayBuffer !== 'undefined') {
+        var src = new ArrayBuffer(5);
+        var dst = new ArrayBuffer(5);
         expect(function() { copy(src, dst); })
           .toThrowMinErr("ng", "cpta", "Can't copy! TypedArray destination cannot be mutated.");
       }
@@ -470,6 +542,45 @@ describe('angular', function() {
       expect(dest.b).toBe(2);
       expect(dest.c).toBe(3);
       expect(Object.keys(dest)).toEqual(['a', 'b', 'c']);
+    });
+
+    it('should copy String() objects', function() {
+      /*jshint -W053 */
+      var obj = new String('foo');
+      /*jshint +W053 */
+      var dest = copy(obj);
+      expect(dest).not.toBe(obj);
+      expect(isObject(dest)).toBe(true);
+      expect(dest.valueOf()).toBe(obj.valueOf());
+    });
+
+    it('should copy Boolean() objects', function() {
+      /*jshint -W053 */
+      var obj = new Boolean(true);
+      /*jshint +W053 */
+      var dest = copy(obj);
+      expect(dest).not.toBe(obj);
+      expect(isObject(dest)).toBe(true);
+      expect(dest.valueOf()).toBe(obj.valueOf());
+    });
+
+    it('should copy Number() objects', function() {
+      /*jshint -W053 */
+      var obj = new Number(42);
+      /*jshint +W053 */
+      var dest = copy(obj);
+      expect(dest).not.toBe(obj);
+      expect(isObject(dest)).toBe(true);
+      expect(dest.valueOf()).toBe(obj.valueOf());
+    });
+
+    it('should copy falsy String/Boolean/Number objects', function() {
+      /*jshint -W053 */
+      expect(copy(new String('')).valueOf()).toBe('');
+      expect(copy(new Boolean(false)).valueOf()).toBe(false);
+      expect(copy(new Number(0)).valueOf()).toBe(0);
+      expect(copy(new Number(NaN)).valueOf()).toBeNaN();
+      /*jshint +W053 */
     });
   });
 
@@ -872,7 +983,7 @@ describe('angular', function() {
   describe('csp', function() {
 
     function mockCspElement(cspAttrName, cspAttrValue) {
-      return spyOn(document, 'querySelector').andCallFake(function(selector) {
+      return spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector == '[' + cspAttrName + ']') {
           var html = '<div ' + cspAttrName + (cspAttrValue ? ('="' + cspAttrValue + '" ') : '') + '></div>';
           return jqLite(html)[0];
@@ -898,7 +1009,7 @@ describe('angular', function() {
 
 
     it('should return true for noUnsafeEval if eval causes a CSP security policy error', function() {
-      window.Function.andCallFake(function() { throw new Error('CSP test'); });
+      window.Function.and.callFake(function() { throw new Error('CSP test'); });
       expect(csp()).toEqual({ noUnsafeEval: true, noInlineStyle: false });
       expect(window.Function).toHaveBeenCalledWith('');
     });
@@ -957,12 +1068,12 @@ describe('angular', function() {
     });
 
     it('should return undefined when jq is not set, no jQuery found (the default)', function() {
-      expect(jq()).toBe(undefined);
+      expect(jq()).toBeUndefined();
     });
 
     it('should return empty string when jq is enabled manually via [ng-jq] with empty string', function() {
       element.setAttribute('ng-jq', '');
-      spyOn(document, 'querySelector').andCallFake(function(selector) {
+      spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector === '[ng-jq]') return element;
       });
       expect(jq()).toBe('');
@@ -970,7 +1081,7 @@ describe('angular', function() {
 
     it('should return empty string when jq is enabled manually via [data-ng-jq] with empty string', function() {
       element.setAttribute('data-ng-jq', '');
-      spyOn(document, 'querySelector').andCallFake(function(selector) {
+      spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector === '[data-ng-jq]') return element;
       });
       expect(jq()).toBe('');
@@ -979,7 +1090,7 @@ describe('angular', function() {
 
     it('should return empty string when jq is enabled manually via [x-ng-jq] with empty string', function() {
       element.setAttribute('x-ng-jq', '');
-      spyOn(document, 'querySelector').andCallFake(function(selector) {
+      spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector === '[x-ng-jq]') return element;
       });
       expect(jq()).toBe('');
@@ -988,7 +1099,7 @@ describe('angular', function() {
 
     it('should return empty string when jq is enabled manually via [ng:jq] with empty string', function() {
       element.setAttribute('ng:jq', '');
-      spyOn(document, 'querySelector').andCallFake(function(selector) {
+      spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector === '[ng\\:jq]') return element;
       });
       expect(jq()).toBe('');
@@ -997,7 +1108,7 @@ describe('angular', function() {
 
     it('should return "jQuery" when jq is enabled manually via [ng-jq] with value "jQuery"', function() {
       element.setAttribute('ng-jq', 'jQuery');
-      spyOn(document, 'querySelector').andCallFake(function(selector) {
+      spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector === '[ng-jq]') return element;
       });
       expect(jq()).toBe('jQuery');
@@ -1006,7 +1117,7 @@ describe('angular', function() {
 
     it('should return "jQuery" when jq is enabled manually via [data-ng-jq] with value "jQuery"', function() {
       element.setAttribute('data-ng-jq', 'jQuery');
-      spyOn(document, 'querySelector').andCallFake(function(selector) {
+      spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector === '[data-ng-jq]') return element;
       });
       expect(jq()).toBe('jQuery');
@@ -1015,7 +1126,7 @@ describe('angular', function() {
 
     it('should return "jQuery" when jq is enabled manually via [x-ng-jq] with value "jQuery"', function() {
       element.setAttribute('x-ng-jq', 'jQuery');
-      spyOn(document, 'querySelector').andCallFake(function(selector) {
+      spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector === '[x-ng-jq]') return element;
       });
       expect(jq()).toBe('jQuery');
@@ -1024,7 +1135,7 @@ describe('angular', function() {
 
     it('should return "jQuery" when jq is enabled manually via [ng:jq] with value "jQuery"', function() {
       element.setAttribute('ng:jq', 'jQuery');
-      spyOn(document, 'querySelector').andCallFake(function(selector) {
+      spyOn(document, 'querySelector').and.callFake(function(selector) {
         if (selector === '[ng\\:jq]') return element;
       });
       expect(jq()).toBe('jQuery');
@@ -1119,17 +1230,38 @@ describe('angular', function() {
     });
 
     it('should return true if passed a nodelist', function() {
-      var nodes = document.body.childNodes;
-      expect(isArrayLike(nodes)).toBe(true);
+      var nodes1 = document.body.childNodes;
+      expect(isArrayLike(nodes1)).toBe(true);
+
+      var nodes2 = document.getElementsByTagName('nonExistingTagName');
+      expect(isArrayLike(nodes2)).toBe(true);
     });
 
     it('should return false for objects with `length` but no matching indexable items', function() {
-      var obj = {
+      var obj1 = {
         a: 'a',
         b:'b',
         length: 10
       };
-      expect(isArrayLike(obj)).toBe(false);
+      expect(isArrayLike(obj1)).toBe(false);
+
+      var obj2 = {
+        length: 0
+      };
+      expect(isArrayLike(obj2)).toBe(false);
+    });
+
+    it('should return true for empty instances of an Array subclass', function() {
+      function ArrayLike() {}
+      ArrayLike.prototype = Array.prototype;
+
+      var arrLike = new ArrayLike();
+      expect(arrLike.length).toBe(0);
+      expect(isArrayLike(arrLike)).toBe(true);
+
+      arrLike.push(1, 2, 3);
+      expect(arrLike.length).toBe(3);
+      expect(isArrayLike(arrLike)).toBe(true);
     });
   });
 
@@ -1504,7 +1636,7 @@ describe('angular', function() {
 
       expect(function() {
         angularInit(appElement, angular.bootstrap);
-      }).toThrowMatching(
+      }).toThrowError(
         new RegExp('\\[\\$injector:modulerr] Failed to instantiate module doesntexist due to:\\n' +
                    '.*\\[\\$injector:nomod] Module \'doesntexist\' is not available! You either ' +
                    'misspelled the module name or forgot to load it\\.')
@@ -1518,7 +1650,7 @@ describe('angular', function() {
 
       expect(function() {
         angular.bootstrap(element);
-      }).toThrowMatching(
+      }).toThrowError(
         /\[ng:btstrpd\] App Already Bootstrapped with this Element '&lt;div class="?ng\-scope"?( ng[0-9]+="?[0-9]+"?)?&gt;'/i
       );
 
@@ -1530,7 +1662,7 @@ describe('angular', function() {
       angular.bootstrap(document.getElementsByTagName('html')[0]);
       expect(function() {
         angular.bootstrap(document);
-      }).toThrowMatching(
+      }).toThrowError(
         /\[ng:btstrpd\] App Already Bootstrapped with this Element 'document'/i
       );
 
@@ -1539,11 +1671,11 @@ describe('angular', function() {
 
 
     it('should bootstrap in strict mode when ng-strict-di attribute is specified', function() {
-      bootstrapSpy = spyOn(angular, 'bootstrap').andCallThrough();
+      bootstrapSpy = spyOn(angular, 'bootstrap').and.callThrough();
       var appElement = jqLite('<div ng-app="" ng-strict-di></div>');
       angularInit(jqLite('<div></div>').append(appElement[0])[0], bootstrapSpy);
       expect(bootstrapSpy).toHaveBeenCalledOnce();
-      expect(bootstrapSpy.mostRecentCall.args[2].strictDi).toBe(true);
+      expect(bootstrapSpy.calls.mostRecent().args[2].strictDi).toBe(true);
 
       var injector = appElement.injector();
       function testFactory($rootScope) {}
@@ -1731,7 +1863,7 @@ describe('angular', function() {
 
       expect(function() {
         angular.bootstrap(element, ['doesntexist']);
-      }).toThrowMatching(
+      }).toThrowError(
           new RegExp('\\[\\$injector:modulerr\\] Failed to instantiate module doesntexist due to:\\n' +
                      '.*\\[\\$injector:nomod\\] Module \'doesntexist\' is not available! You either ' +
                      'misspelled the module name or forgot to load it\\.'));
@@ -1865,7 +1997,7 @@ describe('angular', function() {
   describe('fromJson', function() {
 
     it('should delegate to JSON.parse', function() {
-      var spy = spyOn(JSON, 'parse').andCallThrough();
+      var spy = spyOn(JSON, 'parse').and.callThrough();
 
       expect(fromJson('{}')).toEqual({});
       expect(spy).toHaveBeenCalled();
@@ -1876,7 +2008,7 @@ describe('angular', function() {
   describe('toJson', function() {
 
     it('should delegate to JSON.stringify', function() {
-      var spy = spyOn(JSON, 'stringify').andCallThrough();
+      var spy = spyOn(JSON, 'stringify').and.callThrough();
 
       expect(toJson({})).toEqual('{}');
       expect(spy).toHaveBeenCalled();

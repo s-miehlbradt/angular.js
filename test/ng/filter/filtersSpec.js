@@ -1,7 +1,6 @@
 'use strict';
 
 describe('filters', function() {
-
   var filter;
 
   beforeEach(inject(function($filter) {
@@ -36,7 +35,11 @@ describe('filters', function() {
 
     it('should format according to different patterns', function() {
       pattern.gSize = 2;
-      var num = formatNumber(1234567.89, pattern, ',', '.');
+      var num = formatNumber(99, pattern, ',', '.');
+      expect(num).toBe('99');
+      num = formatNumber(888, pattern, ',', '.');
+      expect(num).toBe('888');
+      num = formatNumber(1234567.89, pattern, ',', '.');
       expect(num).toBe('12,34,567.89');
       num = formatNumber(1234.56, pattern, ',', '.');
       expect(num).toBe('1,234.56');
@@ -84,6 +87,26 @@ describe('filters', function() {
       expect(num).toBe('123.100');
       num = formatNumber(123.1, pattern, ',', '.', 3);
       expect(num).toBe('123.100');
+    });
+
+    it('should work with negative fractionSize', function() {
+      expect(formatNumber(49, pattern, ',', '.', -2)).toBe('0');
+      expect(formatNumber(50, pattern, ',', '.', -2)).toBe('100');
+      expect(formatNumber(51, pattern, ',', '.', -2)).toBe('100');
+      expect(formatNumber(1234, pattern, ',', '.', -1)).toBe('1,230');
+      expect(formatNumber(1234.567, pattern, ',', '.', -1)).toBe('1,230');
+      expect(formatNumber(1235, pattern, ',', '.', -1)).toBe('1,240');
+      expect(formatNumber(1235, pattern, ',', '.', -2)).toBe('1,200');
+      expect(formatNumber(1235, pattern, ',', '.', -3)).toBe('1,000');
+      expect(formatNumber(1235, pattern, ',', '.', -4)).toBe('0');
+      expect(formatNumber(1250, pattern, ',', '.', -2)).toBe('1,300');
+      expect(formatNumber(1000, pattern, ',', '.', -3)).toBe('1,000');
+      expect(formatNumber(1000, pattern, ',', '.', -4)).toBe('0');
+      expect(formatNumber(1000, pattern, ',', '.', -5)).toBe('0');
+      expect(formatNumber(1, pattern, ',', '.', -1)).toBe('0');
+      expect(formatNumber(1, pattern, ',', '.', -2)).toBe('0');
+      expect(formatNumber(9, pattern, ',', '.', -1)).toBe('10');
+      expect(formatNumber(501, pattern, ',', '.', -3)).toBe('1,000');
     });
 
     it('should format numbers that round to zero as nonnegative', function() {
@@ -142,7 +165,7 @@ describe('filters', function() {
     });
 
     it('should pass through null and undefined to be compatible with one-time binding', function() {
-      expect(currency(undefined)).toBe(undefined);
+      expect(currency(undefined)).toBeUndefined();
       expect(currency(null)).toBe(null);
     });
 
@@ -165,13 +188,12 @@ describe('filters', function() {
     }));
   });
 
-
   describe('number', function() {
     var number;
 
-    beforeEach(inject(function($rootScope) {
+    beforeEach(function() {
       number = filter('number');
-    }));
+    });
 
 
     it('should do basic filter', function() {
@@ -215,7 +237,7 @@ describe('filters', function() {
 
     it('should pass through null and undefined to be compatible with one-time binding', function() {
       expect(number(null)).toBe(null);
-      expect(number(undefined)).toBe(undefined);
+      expect(number(undefined)).toBeUndefined();
     });
 
     it('should filter exponentially large numbers', function() {
@@ -270,17 +292,18 @@ describe('filters', function() {
   });
 
   describe('date', function() {
-
-    var morning  = new angular.mock.TzDate(+5, '2010-09-03T12:05:08.001Z'); //7am
-    var noon =     new angular.mock.TzDate(+5, '2010-09-03T17:05:08.012Z'); //12pm
-    var midnight = new angular.mock.TzDate(+5, '2010-09-03T05:05:08.123Z'); //12am
-    var earlyDate = new angular.mock.TzDate(+5, '0001-09-03T05:05:08.000Z');
-    var secondWeek = new angular.mock.TzDate(+5, '2013-01-11T12:00:00.000Z'); //Friday Jan 11, 2012
+    var morning    = new angular.mock.TzDate(+5, '2010-09-03T12:05:08.001Z'); //7am
+    var noon       = new angular.mock.TzDate(+5, '2010-09-03T17:05:08.012Z'); //12pm
+    var midnight   = new angular.mock.TzDate(+5, '2010-09-03T05:05:08.123Z'); //12am
+    var earlyDate  = new angular.mock.TzDate(+5, '0001-09-03T05:05:08.000Z');
+    var year0Date  = new angular.mock.TzDate(+5, '0000-12-25T05:05:08.000Z');
+    var bcDate     = new angular.mock.TzDate(+5, '-0026-01-16T05:05:08.000Z');
+    var secondWeek = new angular.mock.TzDate(+5, '2013-01-11T12:00:00.000Z'); //Friday Jan 11, 2013
     var date;
 
-    beforeEach(inject(function($filter) {
-      date = $filter('date');
-    }));
+    beforeEach(function() {
+      date = filter('date');
+    });
 
     it('should ignore falsy inputs', function() {
       expect(date(null)).toBeNull();
@@ -339,6 +362,15 @@ describe('filters', function() {
       expect(date(earlyDate, "MMMM dd, y")).
                       toEqual('September 03, 1');
 
+      expect(date(earlyDate, "MMMM dd, yyyy")).
+                      toEqual('September 03, 0001');
+
+      expect(date(year0Date, "dd MMMM y G")).
+                      toEqual('25 December 1 BC');
+
+      expect(date(bcDate, "dd MMMM y G")).
+                      toEqual('16 January 27 BC');
+
       expect(date(noon, "MMMM dd, y G")).
                       toEqual('September 03, 2010 AD');
 
@@ -351,6 +383,21 @@ describe('filters', function() {
       expect(date(noon, "MMMM dd, y GGGG")).
                       toEqual('September 03, 2010 Anno Domini');
     });
+
+    it('should support STANDALONEMONTH in format (`LLLL`)', inject(function($locale) {
+      var standAloneMonth = $locale.DATETIME_FORMATS.STANDALONEMONTH;
+      var september = standAloneMonth[8];
+      var standAloneSeptember = 'StandAlone' + september;
+
+      // Overwrite September in STANDALONEMONTH
+      standAloneMonth[8] = standAloneSeptember;
+
+      expect(date(noon, 'MMMM')).toEqual(september);
+      expect(date(noon, 'LLLL')).toEqual(standAloneSeptember);
+
+      // Restore September in STANDALONEMONTH
+      standAloneMonth[8] = september;
+    }));
 
     it('should accept negative numbers as strings', function() {
       //Note: this tests a timestamp set for 3 days before the unix epoch.
@@ -421,6 +468,8 @@ describe('filters', function() {
     it('should treat a sequence of two single quotes as a literal single quote', function() {
       expect(date(midnight, "yyyy'de' 'a''dd' 'adZ' h=H:m:saZ")).
                       toEqual("2010de a'dd adZ 12=0:5:8AM-0500");
+      expect(date(midnight, "EEE, MMM d, ''yy")).
+                      toEqual("Fri, Sep 3, '10");
     });
 
     it('should accept default formats', function() {
@@ -454,7 +503,6 @@ describe('filters', function() {
       expect(date(morning, 'yy/xxx')).toEqual('10/xxx');
     });
 
-
     it('should support various iso8061 date strings with timezone as input', function() {
       var format = 'yyyy-MM-dd ss';
 
@@ -476,7 +524,6 @@ describe('filters', function() {
       //no minutes
       expect(date('2003-09-10T13Z', format)).toEqual('2003-09-' + localDay + ' 00');
     });
-
 
     it('should parse iso8061 date strings without timezone as local time', function() {
       var format = 'yyyy-MM-dd HH-mm-ss';
@@ -512,7 +559,13 @@ describe('filters', function() {
     });
 
     it('should support conversion to any timezone', function() {
-      expect(date(new Date(Date.UTC(2003, 8, 10, 3, 2, 4)), 'yyyy-MM-dd HH-mm-ssZ', 'GMT+0500')).toEqual('2003-09-10 08-02-04+0500');
+      var dateObj = new Date(Date.UTC(2003, 8, 10, 3, 2, 4));
+      var format = 'yyyy-MM-dd HH-mm-ssZ';
+
+      expect(date(dateObj, format, '+0500')).toEqual('2003-09-10 08-02-04+0500');
+      expect(date(dateObj, format, '+05:00')).toEqual('2003-09-10 08-02-04+0500');
+      expect(date(dateObj, format, 'GMT+0500')).toEqual('2003-09-10 08-02-04+0500');
+      expect(date(dateObj, format, 'GMT+05:00')).toEqual('2003-09-10 08-02-04+0500');
     });
 
     it('should fallback to default timezone in case an unknown timezone was passed', function() {

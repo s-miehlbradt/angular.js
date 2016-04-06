@@ -1,15 +1,29 @@
 /* global jQuery: true, uid: true, jqCache: true */
 'use strict';
 
-/**
- * Here is the problem: http://bugs.jquery.com/ticket/7292
- * basically jQuery treats change event on some browsers (IE) as a
- * special event and changes it form 'change' to 'click/keydown' and
- * few others. This horrible hack removes the special treatment
- */
-if (window._jQuery) _jQuery.event.special.change = undefined;
-
 if (window.bindJQuery) bindJQuery();
+
+var supportTests = {
+  classes: '(class {})',
+  fatArrow: 'a => a',
+  ES6Function: '({ fn(x) { return; } })'
+};
+
+var support = {};
+
+for (var prop in supportTests) {
+  if (supportTests.hasOwnProperty(prop)) {
+    /*jshint -W061 */
+    try {
+      eval(supportTests[prop]);
+      support[prop] = true;
+    } catch (e) {
+      support[prop] = false;
+    }
+    /*jshint +W061 */
+  }
+}
+
 
 beforeEach(function() {
 
@@ -117,12 +131,8 @@ function dealoc(obj) {
   }
 
   function cleanup(element) {
-    element.off().removeData();
-    if (window.jQuery) {
-      // jQuery 2.x doesn't expose the cache storage; ensure all element data
-      // is removed during its cleanup.
-      jQuery.cleanData([element]);
-    }
+    angular.element.cleanData(element);
+
     // Note:  We aren't using element.contents() here.  Under jQuery, element.contents() can fail
     // for IFRAME elements.  jQuery explicitly uses (element.contentDocument ||
     // element.contentWindow.document) and both properties are null for IFRAMES that aren't attached
@@ -340,66 +350,68 @@ window.dump = function() {
   }));
 };
 
-function getInputCompileHelper(currentSpec) {
+function generateInputCompilerHelper(helper) {
+  beforeEach(function() {
+    module(function($compileProvider) {
+      $compileProvider.directive('attrCapture', function() {
+        return function(scope, element, $attrs) {
+          helper.attrs = $attrs;
+        };
+      });
+    });
+    inject(function($compile, $rootScope, $sniffer) {
 
-  var helper = {};
+      helper.compileInput = function(inputHtml, mockValidity, scope) {
 
-  module(function($compileProvider) {
-    $compileProvider.directive('attrCapture', function() {
-      return function(scope, element, $attrs) {
-        helper.attrs = $attrs;
+        scope = helper.scope = scope || $rootScope;
+
+        // Create the input element and dealoc when done
+        helper.inputElm = jqLite(inputHtml);
+
+        // Set up mock validation if necessary
+        if (isObject(mockValidity)) {
+          VALIDITY_STATE_PROPERTY = 'ngMockValidity';
+          helper.inputElm.prop(VALIDITY_STATE_PROPERTY, mockValidity);
+        }
+
+        // Create the form element and dealoc when done
+        helper.formElm = jqLite('<form name="form"></form>');
+        helper.formElm.append(helper.inputElm);
+
+        // Compile the lot and return the input element
+        $compile(helper.formElm)(scope);
+
+        spyOn(scope.form, '$addControl').and.callThrough();
+        spyOn(scope.form, '$$renameControl').and.callThrough();
+
+        scope.$digest();
+
+        return helper.inputElm;
+      };
+
+      helper.changeInputValueTo = function(value) {
+        helper.inputElm.val(value);
+        browserTrigger(helper.inputElm, $sniffer.hasEvent('input') ? 'input' : 'change');
+      };
+
+      helper.changeGivenInputTo = function(inputElm, value) {
+        inputElm.val(value);
+        browserTrigger(inputElm, $sniffer.hasEvent('input') ? 'input' : 'change');
+      };
+
+      helper.dealoc = function() {
+        dealoc(helper.inputElm);
+        dealoc(helper.formElm);
       };
     });
   });
 
-  inject(function($compile, $rootScope, $sniffer) {
-
-    helper.compileInput = function(inputHtml, mockValidity, scope) {
-
-      scope = helper.scope = scope || $rootScope;
-
-      // Create the input element and dealoc when done
-      helper.inputElm = jqLite(inputHtml);
-
-      // Set up mock validation if necessary
-      if (isObject(mockValidity)) {
-        VALIDITY_STATE_PROPERTY = 'ngMockValidity';
-        helper.inputElm.prop(VALIDITY_STATE_PROPERTY, mockValidity);
-        currentSpec.after(function() {
-          VALIDITY_STATE_PROPERTY = 'validity';
-        });
-      }
-
-      // Create the form element and dealoc when done
-      helper.formElm = jqLite('<form name="form"></form>');
-      helper.formElm.append(helper.inputElm);
-
-      // Compile the lot and return the input element
-      $compile(helper.formElm)(scope);
-
-      spyOn(scope.form, '$addControl').andCallThrough();
-      spyOn(scope.form, '$$renameControl').andCallThrough();
-
-      scope.$digest();
-
-      return helper.inputElm;
-    };
-
-    helper.changeInputValueTo = function(value) {
-      helper.inputElm.val(value);
-      browserTrigger(helper.inputElm, $sniffer.hasEvent('input') ? 'input' : 'change');
-    };
-
-    helper.changeGivenInputTo = function(inputElm, value) {
-      inputElm.val(value);
-      browserTrigger(inputElm, $sniffer.hasEvent('input') ? 'input' : 'change');
-    };
-
-    helper.dealoc = function() {
-      dealoc(helper.inputElm);
-      dealoc(helper.formElm);
-    };
+  afterEach(function() {
+    helper.dealoc();
   });
 
-  return helper;
+  afterEach(function() {
+    VALIDITY_STATE_PROPERTY = 'validity';
+  });
 }
+

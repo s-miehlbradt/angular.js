@@ -106,14 +106,28 @@ describe('Scope', function() {
       var spy = jasmine.createSpy();
       $rootScope.$watch('name', spy);
       $rootScope.$digest();
-      spy.reset();
+      spy.calls.reset();
 
-      expect(spy).not.wasCalled();
+      expect(spy).not.toHaveBeenCalled();
       $rootScope.$digest();
-      expect(spy).not.wasCalled();
+      expect(spy).not.toHaveBeenCalled();
       $rootScope.name = 'misko';
       $rootScope.$digest();
-      expect(spy).wasCalledWith('misko', undefined, $rootScope);
+      expect(spy).toHaveBeenCalledWith('misko', undefined, $rootScope);
+    }));
+
+
+    it('should not expose the `inner working of watch', inject(function($rootScope) {
+      function Getter() {
+        expect(this).toBeUndefined();
+        return 'foo';
+      }
+      function Listener() {
+        expect(this).toBeUndefined();
+      }
+      if (msie < 10) return;
+      $rootScope.$watch(Getter, Listener);
+      $rootScope.$digest();
     }));
 
 
@@ -121,15 +135,15 @@ describe('Scope', function() {
       var spy = jasmine.createSpy();
       $rootScope.$watch('name.first', spy);
       $rootScope.$digest();
-      spy.reset();
+      spy.calls.reset();
 
       $rootScope.name = {};
-      expect(spy).not.wasCalled();
+      expect(spy).not.toHaveBeenCalled();
       $rootScope.$digest();
-      expect(spy).not.wasCalled();
+      expect(spy).not.toHaveBeenCalled();
       $rootScope.name.first = 'misko';
       $rootScope.$digest();
-      expect(spy).wasCalled();
+      expect(spy).toHaveBeenCalled();
     }));
 
     it('should not keep constant expressions on watch queue', inject(function($rootScope) {
@@ -188,7 +202,7 @@ describe('Scope', function() {
       expect(child1.$$watchersCount).toBe(1);
       expect($rootScope.$$watchersCount).toBe(2);
 
-      // Execute everything a second time to be sure that calling the remove funciton
+      // Execute everything a second time to be sure that calling the remove function
       // several times, it only decrements the counter once
       remove2();
       expect(child2.$$watchersCount).toBe(1);
@@ -529,12 +543,12 @@ describe('Scope', function() {
         expect(listener).toHaveBeenCalled();
         expect(listenerRemove).toBeDefined();
 
-        listener.reset();
+        listener.calls.reset();
         $rootScope.foo = 'bar';
         $rootScope.$digest(); //triger
         expect(listener).toHaveBeenCalledOnce();
 
-        listener.reset();
+        listener.calls.reset();
         $rootScope.foo = 'baz';
         listenerRemove();
         $rootScope.$digest(); //trigger
@@ -815,11 +829,11 @@ describe('Scope', function() {
           $rootScope.obj.c = temp;
           $rootScope.$digest();
           expect(log.empty()).
-              toEqual([{newVal: {a: [], b: {}, c: 'B'}, oldVal: {a: 'B', b: [], c: {}}}]);
+              toEqual([{newVal: {a: [], b: [], c: 'B'}, oldVal: {a: 'B', b: [], c: {}}}]);
 
           delete $rootScope.obj.a;
           $rootScope.$digest();
-          expect(log.empty()).toEqual([{newVal: {b: {}, c: 'B'}, oldVal: {a: [], b: {}, c: 'B'}}]);
+          expect(log.empty()).toEqual([{newVal: {b: [], c: 'B'}, oldVal: {a: [], b: [], c: 'B'}}]);
         });
 
 
@@ -836,11 +850,11 @@ describe('Scope', function() {
           $rootScope.obj.a = 'a';
           $rootScope.obj.b = 'b';
           $rootScope.$digest();
-          expect(log.empty()[0].newVal).toEqual({a: 'a', b: 'b'});
+          expect(log.empty()[0].newVal).toEqual(extend(Object.create(null), {a: 'a', b: 'b'}));
 
           delete $rootScope.obj.b;
           $rootScope.$digest();
-          expect(log.empty()[0].newVal).toEqual({a: 'a'});
+          expect(log.empty()[0].newVal).toEqual(extend(Object.create(null), {a: 'a'}));
         });
       });
     });
@@ -1141,7 +1155,7 @@ describe('Scope', function() {
       expect(first.$$listenerCount[EVENT]).toBeUndefined();
 
       $rootScope.$broadcast(EVENT);
-      expect(spy.callCount).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(1);
     }));
 
 
@@ -1387,7 +1401,7 @@ describe('Scope', function() {
       expect(child.log).toBe('child context');
     }));
 
-    it('should operate only with a single queue across all child and isolate scopes', inject(function($rootScope) {
+    it('should operate only with a single queue across all child and isolate scopes', inject(function($rootScope, $parse) {
       var childScope = $rootScope.$new();
       var isolateScope = $rootScope.$new(true);
 
@@ -1398,9 +1412,9 @@ describe('Scope', function() {
       expect(childScope.$$asyncQueue).toBe($rootScope.$$asyncQueue);
       expect(isolateScope.$$asyncQueue).toBeUndefined();
       expect($rootScope.$$asyncQueue).toEqual([
-        {scope: $rootScope, expression: 'rootExpression'},
-        {scope: childScope, expression: 'childExpression'},
-        {scope: isolateScope, expression: 'isolateExpression'}
+        {scope: $rootScope, expression: $parse('rootExpression'), locals: undefined},
+        {scope: childScope, expression: $parse('childExpression'), locals: undefined},
+        {scope: isolateScope, expression: $parse('isolateExpression'), locals: undefined}
       ]);
     }));
 
@@ -1670,16 +1684,16 @@ describe('Scope', function() {
 
 
     it('should be cancelled if a $rootScope digest occurs before the next tick', inject(function($rootScope, $browser) {
-      var apply = spyOn($rootScope, '$apply').andCallThrough();
-      var cancel = spyOn($browser.defer, 'cancel').andCallThrough();
+      var apply = spyOn($rootScope, '$apply').and.callThrough();
+      var cancel = spyOn($browser.defer, 'cancel').and.callThrough();
       var expression = jasmine.createSpy('expr');
 
       $rootScope.$applyAsync(expression);
       $rootScope.$digest();
       expect(expression).toHaveBeenCalledOnce();
       expect(cancel).toHaveBeenCalledOnce();
-      expression.reset();
-      cancel.reset();
+      expression.calls.reset();
+      cancel.calls.reset();
 
       // assert that we no longer are waiting to execute
       expect($browser.deferredFns.length).toBe(0);
@@ -1891,7 +1905,7 @@ describe('Scope', function() {
         var remove2 = child.$on('evt', spy2);
         var remove3 = child.$on('evt', spy3);
 
-        spy1.andCallFake(remove1);
+        spy1.and.callFake(remove1);
 
         expect(child.$$listeners['evt'].length).toBe(3);
 
@@ -1902,12 +1916,12 @@ describe('Scope', function() {
         expect(spy3).toHaveBeenCalledOnce();
         expect(child.$$listeners['evt'].length).toBe(3); // cleanup will happen on next $emit
 
-        spy1.reset();
-        spy2.reset();
-        spy3.reset();
+        spy1.calls.reset();
+        spy2.calls.reset();
+        spy3.calls.reset();
 
         // should call only 2nd because 1st was already removed and 2nd removes 3rd
-        spy2.andCallFake(remove3);
+        spy2.and.callFake(remove3);
         child.$emit('evt');
         expect(spy1).not.toHaveBeenCalled();
         expect(spy2).toHaveBeenCalledOnce();
@@ -1925,7 +1939,7 @@ describe('Scope', function() {
         var remove2 = child.$on('evt', spy2);
         var remove3 = child.$on('evt', spy3);
 
-        spy1.andCallFake(remove1);
+        spy1.and.callFake(remove1);
 
         expect(child.$$listeners['evt'].length).toBe(3);
 
@@ -1936,12 +1950,12 @@ describe('Scope', function() {
         expect(spy3).toHaveBeenCalledOnce();
         expect(child.$$listeners['evt'].length).toBe(3); //cleanup will happen on next $broadcast
 
-        spy1.reset();
-        spy2.reset();
-        spy3.reset();
+        spy1.calls.reset();
+        spy2.calls.reset();
+        spy3.calls.reset();
 
         // should call only 2nd because 1st was already removed and 2nd removes 3rd
-        spy2.andCallFake(remove3);
+        spy2.and.callFake(remove3);
         child.$broadcast('evt');
         expect(spy1).not.toHaveBeenCalled();
         expect(spy2).toHaveBeenCalledOnce();

@@ -54,6 +54,7 @@ module.exports = new Package('angularjs', [
 .config(function(parseTagsProcessor) {
   parseTagsProcessor.tagDefinitions.push(require('./tag-defs/tutorial-step'));
   parseTagsProcessor.tagDefinitions.push(require('./tag-defs/sortOrder'));
+  parseTagsProcessor.tagDefinitions.push(require('./tag-defs/installation'));
 })
 
 
@@ -170,4 +171,8 @@ module.exports = new Package('angularjs', [
     jqueryDeployment,
     productionDeployment
   ];
+})
+
+.config(function(generateKeywordsProcessor) {
+  generateKeywordsProcessor.docTypesToIgnore = ['componentGroup'];
 });

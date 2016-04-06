@@ -18,6 +18,7 @@
   "indent": 2,
   "bitwise": false, /* locale files use bitwise operators */
   "maxlen": false, /* locale files are generated from a 3rd party library that has long lines */
+  "eqeqeq": false,
   "browser": true,
   "globals": {
     "angular": false

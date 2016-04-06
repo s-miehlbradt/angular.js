@@ -35,8 +35,10 @@ function init {
 }
 
 function build {
+  source ./set-node-version.sh
   cd ../..
 
+  npm install -g grunt-cli
   npm install --color false
   grunt ci-checks package --no-color
 

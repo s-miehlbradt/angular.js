@@ -11,7 +11,7 @@ function baseThey(msg, vals, spec, itFn) {
   var valsIsArray = angular.isArray(vals);
 
   angular.forEach(vals, function(val, key) {
-    var m = msg.replace(/\$prop/g, angular.toJson(valsIsArray ? val : key));
+    var m = msg.split('$prop').join(angular.toJson(valsIsArray ? val : key));
     itFn(m, function() {
       /* jshint -W040 : ignore possible strict violation due to use of this */
       spec.call(this, val);
@@ -23,8 +23,8 @@ function they(msg, vals, spec) {
   baseThey(msg, vals, spec, it);
 }
 
-function tthey(msg, vals, spec) {
-  baseThey(msg, vals, spec, iit);
+function fthey(msg, vals, spec) {
+  baseThey(msg, vals, spec, fit);
 }
 
 function xthey(msg, vals, spec) {
@@ -40,9 +40,8 @@ function browserSupportsCssAnimations() {
   return true;
 }
 
-function createMockStyleSheet(doc, wind) {
+function createMockStyleSheet(doc, prefix) {
   doc = doc ? doc[0] : document;
-  wind = wind || window;
 
   var node = doc.createElement('style');
   var head = doc.getElementsByTagName('head')[0];
@@ -61,6 +60,18 @@ function createMockStyleSheet(doc, wind) {
         }
         catch (e2) {}
       }
+    },
+
+    addPossiblyPrefixedRule: function(selector, styles) {
+      if (prefix) {
+        var prefixedStyles = styles.split(/\s*;\s*/g).map(function(style) {
+          return !style ? '' : prefix + style;
+        }).join('; ');
+
+        this.addRule(selector, prefixedStyles);
+      }
+
+      this.addRule(selector, styles);
     },
 
     destroy: function() {

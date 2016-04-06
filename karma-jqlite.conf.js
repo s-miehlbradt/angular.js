@@ -16,12 +16,17 @@ module.exports = function(config) {
     },
       //istanbul coverage using clover format
     reporters: ['coverage'],
-      preprocessors: angularFiles.mergeFilesFor('karma'),
+    preprocessors: {
+        // source files, that you wanna generate coverage for
+        // do not include tests or libraries
+        // (these files will be instrumented by Istanbul)
+        'src/**/*.js': ['coverage']
+    },
 
-      // configure the reporter
-      coverageReporter: {
+    // configure the reporter
+    coverageReporter: {
           type : 'clover',
           dir : 'coverage/'
-      }
+    }
   });
 };

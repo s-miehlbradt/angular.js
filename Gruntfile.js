@@ -83,7 +83,6 @@ module.exports = function(grunt) {
       modules: 'karma-modules.conf.js'
     },
 
-
     autotest: {
       jqlite: 'karma-jqlite.conf.js',
       jquery: 'karma-jquery.conf.js',

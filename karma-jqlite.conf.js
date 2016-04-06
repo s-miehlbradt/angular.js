@@ -13,6 +13,15 @@ module.exports = function(config) {
     junitReporter: {
       outputFile: 'test_out/jqlite.xml',
       suite: 'jqLite'
-    }
+    },
+      //istanbul coverage using clover format
+    reporters: ['coverage'],
+      preprocessors: angularFiles.mergeFilesFor('karma'),
+
+      // configure the reporter
+      coverageReporter: {
+          type : 'clover',
+          dir : 'coverage/'
+      }
   });
 };
